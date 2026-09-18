@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PBN Editor</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="page">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">Bridge</p>
+          <h1>PBN Editor</h1>
+        </div>
+
+        <div class="actions" aria-label="Givsamling">
+          <button class="button button-primary" type="button" disabled title="Kommer i en senare version">Ny givsamling</button>
+          <button class="button button-secondary" type="button" disabled title="Kommer i en senare version">Öppna PBN</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="deal-section" aria-labelledby="deal-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Giv 1</p>
+              <h2 id="deal-heading">Exempelgiv</h2>
+            </div>
+            <p class="section-note">Fyra händer runt bordet</p>
+          </div>
+
+          <div class="board" aria-label="Bridgebord med en exempelgiv">
+            <div class="table-felt" aria-hidden="true"></div>
+
+            <article class="hand hand-north" aria-labelledby="north-heading">
+              <h3 id="north-heading">Nord</h3>
+              <div class="suits" data-seat="north"></div>
+            </article>
+
+            <article class="hand hand-east" aria-labelledby="east-heading">
+              <h3 id="east-heading">Öst</h3>
+              <div class="suits" data-seat="east"></div>
+            </article>
+
+            <article class="hand hand-south" aria-labelledby="south-heading">
+              <h3 id="south-heading">Syd</h3>
+              <div class="suits" data-seat="south"></div>
+            </article>
+
+            <article class="hand hand-west" aria-labelledby="west-heading">
+              <h3 id="west-heading">Väst</h3>
+              <div class="suits" data-seat="west"></div>
+            </article>
+
+            <div class="board-center" aria-hidden="true">1</div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,276 @@
+:root {
+  color-scheme: light;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #1e302b;
+  background: #f4f6f3;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.page {
+  width: min(100%, 1000px);
+  margin: 0 auto;
+  padding: 40px 28px 64px;
+}
+
+.page-header,
+.section-heading,
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-header {
+  margin-bottom: 48px;
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  margin: 0 0 7px;
+  color: #60746b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 0;
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  letter-spacing: -0.04em;
+}
+
+.actions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.button {
+  min-height: 43px;
+  padding: 0 17px;
+  border: 1px solid #2a6b53;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.button-primary {
+  background: #2a6b53;
+  color: #fff;
+}
+
+.button-secondary {
+  background: #fff;
+  color: #245a46;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.deal-section {
+  padding: clamp(16px, 4vw, 36px);
+  border: 1px solid #e2e9e3;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(26, 55, 39, 0.06);
+}
+
+.section-heading {
+  margin-bottom: 24px;
+}
+
+h2 {
+  margin-bottom: 0;
+  font-size: 1.4rem;
+  letter-spacing: -0.025em;
+}
+
+.section-note {
+  margin-bottom: 0;
+  color: #6d7b73;
+  font-size: 0.9rem;
+}
+
+.board {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(42px, 0.55fr) minmax(0, 1fr);
+  grid-template-rows: 166px 190px 166px;
+  align-items: center;
+  justify-items: center;
+  min-width: 0;
+}
+
+.table-felt {
+  z-index: 0;
+  grid-column: 1 / 4;
+  grid-row: 1 / 4;
+  width: 69%;
+  height: 48%;
+  border: 5px solid #d9e9db;
+  border-radius: 999px;
+  background: #327358;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18);
+}
+
+.hand {
+  z-index: 1;
+  width: min(100%, 220px);
+  padding: 15px 18px;
+  border: 1px solid #dce6dd;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(17, 52, 36, 0.09);
+}
+
+.hand h3 {
+  margin-bottom: 10px;
+  font-size: 0.93rem;
+  font-weight: 700;
+}
+
+.hand-north {
+  grid-column: 1 / 4;
+  grid-row: 1;
+  align-self: start;
+}
+
+.hand-east {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.hand-south {
+  grid-column: 1 / 4;
+  grid-row: 3;
+  align-self: end;
+}
+
+.hand-west {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.suit-row {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  min-height: 24px;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.suit-symbol {
+  width: 17px;
+  flex: 0 0 17px;
+  font-size: 1.1rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.suit-row.red .suit-symbol {
+  color: #bf4b50;
+}
+
+.ranks {
+  letter-spacing: 0.02em;
+}
+
+.board-center {
+  z-index: 1;
+  display: grid;
+  grid-column: 2;
+  grid-row: 2;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 24px 14px 40px;
+  }
+
+  .page-header {
+    margin-bottom: 28px;
+  }
+
+  .section-note {
+    display: none;
+  }
+
+  .board {
+    grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr);
+    grid-template-rows: 150px 172px 150px;
+  }
+
+  .table-felt {
+    width: 75%;
+    height: 46%;
+    border-width: 4px;
+  }
+
+  .hand {
+    padding: 11px 9px;
+  }
+
+  .hand h3 {
+    margin-bottom: 7px;
+    font-size: 0.85rem;
+  }
+
+  .suit-row {
+    gap: 5px;
+    min-height: 22px;
+    font-size: 0.77rem;
+  }
+
+  .suit-symbol {
+    width: 14px;
+    flex-basis: 14px;
+    font-size: 0.97rem;
+  }
+
+  .board-center {
+    width: 38px;
+    height: 38px;
+    font-size: 1rem;
+  }
+}
