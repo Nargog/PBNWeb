@@ -1,28 +1,29 @@
-// En exempelgiv. Varje spelare har 13 kort.
+// Given från bridgeskalis_deal.pbn (E: öst, syd, väst, nord).
+// Korten skrivs med T för tio. En tom sträng betyder renons.
 const exampleDeal = {
   north: {
-    spades: "A K Q J",
-    hearts: "3 2",
-    diamonds: "9 8 7",
-    clubs: "6 5 4 2"
+    spades: "Q T 8 5",
+    hearts: "A Q 5",
+    diamonds: "A Q 7",
+    clubs: "K J 7"
   },
   east: {
-    spades: "10 9 8",
-    hearts: "A K Q J",
-    diamonds: "6 5 4",
-    clubs: "9 8 7"
+    spades: "J 6 3",
+    hearts: "K T 9 2",
+    diamonds: "J T 4",
+    clubs: "A Q 2"
   },
   south: {
-    spades: "7 6 5",
-    hearts: "10 9 8 7",
-    diamonds: "A K Q",
-    clubs: "A K Q"
+    spades: "A 7 2",
+    hearts: "6 4",
+    diamonds: "5",
+    clubs: "T 9 8 6 5 4 3"
   },
   west: {
-    spades: "4 3 2",
-    hearts: "6 5 4",
-    diamonds: "J 10 3 2",
-    clubs: "J 10 3"
+    spades: "K 9 4",
+    hearts: "J 8 7 3",
+    diamonds: "K 9 8 6 3 2",
+    clubs: ""
   }
 };
 
@@ -51,9 +52,15 @@ for (const [seat, cards] of Object.entries(exampleDeal)) {
 
     const ranks = document.createElement("span");
     ranks.className = "ranks";
-    ranks.textContent = cards[suit.key];
+    ranks.textContent = cards[suit.key] || "–";
 
     row.append(symbol, suitName, ranks);
     hand.append(row);
   }
 }
+
+const validation = validateDeal(exampleDeal);
+const result = document.querySelector("#validation-result");
+result.textContent = validation.valid
+  ? `✓ Given är korrekt – ${validation.uniqueCards} unika kort`
+  : validation.errors.join("; ");
