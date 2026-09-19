@@ -58,3 +58,59 @@ function parseDealValue(dealValue) {
 function separateRanks(ranks) {
   return [...ranks].join(" ");
 }
+
+// Parse all games in a complete PBN document or one deal-only file.
+function parsePbnFile(pbnText) {
+  const text = pbnText.trim();
+  if (!text) {
+    throw new Error("Filen är tom.");
+  }
+
+  const tagPattern = /^\s*\[([A-Za-z][A-Za-z0-9_]*)\s+"((?:\\.|[^"])*)"\]\s*$/gm;
+  const games = [];
+  let game = {};
+  let containsTags = false;
+  let match;
+
+  while ((match = tagPattern.exec(text)) !== null) {
+    containsTags = true;
+    const tagName = match[1].toLowerCase();
+    const tagValue = match[2];
+
+    if (tagName === "board") {
+      game.board = unescapeTagValue(tagValue);
+    } else if (tagName === "dealer") {
+      game.dealer = unescapeTagValue(tagValue);
+    } else if (tagName === "vulnerable") {
+      game.vulnerable = unescapeTagValue(tagValue);
+    } else if (tagName === "deal") {
+      game.deal = tagValue;
+      games.push({
+        board: game.board || "",
+        dealer: game.dealer || "",
+        vulnerable: game.vulnerable || "",
+        deal: game.deal
+      });
+      game = {};
+    }
+  }
+
+  if (games.length > 0) {
+    return games;
+  }
+
+  if (containsTags || text.startsWith("[")) {
+    throw new Error("Filen innehåller ingen Deal-tagg.");
+  }
+
+  return [{ board: "", dealer: "", vulnerable: "", deal: text }];
+}
+
+function unescapeTagValue(value) {
+  return value.replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+}
+
+// Kept for callers that only need the first Deal value.
+function findDealValue(pbnText) {
+  return parsePbnFile(pbnText)[0].deal;
+}

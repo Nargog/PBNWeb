@@ -19,7 +19,8 @@
 
         <div class="actions" aria-label="Givsamling">
           <button class="button button-primary" type="button" disabled title="Kommer i en senare version">Ny givsamling</button>
-          <button class="button button-secondary" type="button" disabled title="Kommer i en senare version">Öppna PBN</button>
+          <button id="open-pbn-button" class="button button-secondary" type="button">Öppna PBN</button>
+          <input id="pbn-file-input" type="file" accept=".pbn,text/plain" hidden>
         </div>
       </header>
 
@@ -27,13 +28,19 @@
         <section class="deal-section" aria-labelledby="deal-heading">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">Giv 1</p>
+              <p id="current-board-label" class="eyebrow">Giv 1</p>
               <h2 id="deal-heading">Exempelgiv</h2>
             </div>
             <p class="section-note">Fyra händer runt bordet</p>
           </div>
 
           <p id="validation-result" class="validation-result" role="status" aria-live="polite"></p>
+          <p id="selected-filename" class="selected-filename" hidden></p>
+          <div id="board-navigation" class="board-navigation" hidden>
+            <label for="board-select">Välj giv</label>
+            <select id="board-select"></select>
+          </div>
+          <p id="deal-count" class="deal-count">1 giv inläst</p>
 
           <div class="board" aria-label="Bridgebord med en exempelgiv">
             <div class="table-felt" aria-hidden="true"></div>
@@ -58,7 +65,7 @@
               <div class="suits" data-seat="west"></div>
             </article>
 
-            <div class="board-center" aria-hidden="true">1</div>
+            <div id="board-number" class="board-center" aria-hidden="true">1</div>
           </div>
         </section>
       </main>
