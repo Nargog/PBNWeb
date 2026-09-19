@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>PBN Editor</title>
     <link rel="stylesheet" href="style.css">
+    <script src="pbn-reader.js" defer></script>
     <script src="pbn-validator.js" defer></script>
     <script src="app.js" defer></script>
   </head>
@@ -32,7 +33,7 @@
             <p class="section-note">Fyra händer runt bordet</p>
           </div>
 
-          <p id="validation-result" role="status" aria-live="polite"></p>
+          <p id="validation-result" class="validation-result" role="status" aria-live="polite"></p>
 
           <div class="board" aria-label="Bridgebord med en exempelgiv">
             <div class="table-felt" aria-hidden="true"></div>

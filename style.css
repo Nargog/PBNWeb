@@ -111,6 +111,24 @@ h2 {
   font-size: 0.9rem;
 }
 
+.validation-result {
+  margin-bottom: 24px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.validation-success {
+  background: #e8f4ec;
+  color: #245a46;
+}
+
+.validation-error {
+  border: 1px solid #e4b9b9;
+  background: #fff0f0;
+  color: #9b2f35;
+}
+
 .board {
   position: relative;
   display: grid;
