@@ -18,7 +18,7 @@
         </div>
 
         <div class="actions" aria-label="Givsamling">
-          <button class="button button-primary" type="button" disabled title="Kommer i en senare version">Ny givsamling</button>
+          <button id="new-collection-button" class="button button-primary" type="button">Ny givsamling</button>
           <button id="open-pbn-button" class="button button-secondary" type="button">Öppna PBN</button>
           <input id="pbn-file-input" type="file" accept=".pbn,text/plain" hidden>
         </div>
@@ -41,6 +41,51 @@
             <select id="board-select"></select>
           </div>
           <p id="deal-count" class="deal-count">1 giv inläst</p>
+          <button id="add-deal-button" class="button button-secondary add-deal-button" type="button" hidden>+ Lägg till giv</button>
+
+          <section id="manual-entry" class="manual-entry" aria-labelledby="manual-entry-heading" hidden>
+            <h3 id="manual-entry-heading">Mata in händer</h3>
+            <div class="hand-entry-grid">
+              <fieldset class="hand-entry">
+                <legend>Nord <span data-hand-count="north">0/13</span></legend>
+                <label><span>♠</span><input data-entry-seat="north" data-entry-suit="spades" type="text" aria-label="Nords spader" autocomplete="off" spellcheck="false"></label>
+                <label><span class="red-suit">♥</span><input data-entry-seat="north" data-entry-suit="hearts" type="text" aria-label="Nords hjärter" autocomplete="off" spellcheck="false"></label>
+                <label><span class="red-suit">♦</span><input data-entry-seat="north" data-entry-suit="diamonds" type="text" aria-label="Nords ruter" autocomplete="off" spellcheck="false"></label>
+                <label><span>♣</span><input data-entry-seat="north" data-entry-suit="clubs" type="text" aria-label="Nords klöver" autocomplete="off" spellcheck="false"></label>
+              </fieldset>
+              <fieldset class="hand-entry">
+                <legend>Öst <span data-hand-count="east">0/13</span></legend>
+                <label><span>♠</span><input data-entry-seat="east" data-entry-suit="spades" type="text" aria-label="Östs spader" autocomplete="off" spellcheck="false"></label>
+                <label><span class="red-suit">♥</span><input data-entry-seat="east" data-entry-suit="hearts" type="text" aria-label="Östs hjärter" autocomplete="off" spellcheck="false"></label>
+                <label><span class="red-suit">♦</span><input data-entry-seat="east" data-entry-suit="diamonds" type="text" aria-label="Östs ruter" autocomplete="off" spellcheck="false"></label>
+                <label><span>♣</span><input data-entry-seat="east" data-entry-suit="clubs" type="text" aria-label="Östs klöver" autocomplete="off" spellcheck="false"></label>
+              </fieldset>
+              <fieldset class="hand-entry">
+                <legend>Syd <span data-hand-count="south">0/13</span></legend>
+                <label><span>♠</span><input data-entry-seat="south" data-entry-suit="spades" type="text" aria-label="Syds spader" autocomplete="off" spellcheck="false"></label>
+                <label><span class="red-suit">♥</span><input data-entry-seat="south" data-entry-suit="hearts" type="text" aria-label="Syds hjärter" autocomplete="off" spellcheck="false"></label>
+                <label><span class="red-suit">♦</span><input data-entry-seat="south" data-entry-suit="diamonds" type="text" aria-label="Syds ruter" autocomplete="off" spellcheck="false"></label>
+                <label><span>♣</span><input data-entry-seat="south" data-entry-suit="clubs" type="text" aria-label="Syds klöver" autocomplete="off" spellcheck="false"></label>
+              </fieldset>
+              <fieldset class="hand-entry">
+                <legend>Väst <span data-hand-count="west">0/13</span></legend>
+                <label><span>♠</span><input data-entry-seat="west" data-entry-suit="spades" type="text" aria-label="Västs spader" autocomplete="off" spellcheck="false"></label>
+                <label><span class="red-suit">♥</span><input data-entry-seat="west" data-entry-suit="hearts" type="text" aria-label="Västs hjärter" autocomplete="off" spellcheck="false"></label>
+                <label><span class="red-suit">♦</span><input data-entry-seat="west" data-entry-suit="diamonds" type="text" aria-label="Västs ruter" autocomplete="off" spellcheck="false"></label>
+                <label><span>♣</span><input data-entry-seat="west" data-entry-suit="clubs" type="text" aria-label="Västs klöver" autocomplete="off" spellcheck="false"></label>
+              </fieldset>
+            </div>
+            <p id="manual-entry-status" class="manual-entry-status" role="status" aria-live="polite"></p>
+
+            <div class="card-bank" aria-labelledby="card-bank-heading">
+              <h3 id="card-bank-heading">Återstående kort</h3>
+              <div class="card-bank-row"><span>♠</span><span class="remaining-ranks" data-remaining-suit="spades"></span></div>
+              <div class="card-bank-row"><span class="red-suit">♥</span><span class="remaining-ranks" data-remaining-suit="hearts"></span></div>
+              <div class="card-bank-row"><span class="red-suit">♦</span><span class="remaining-ranks" data-remaining-suit="diamonds"></span></div>
+              <div class="card-bank-row"><span>♣</span><span class="remaining-ranks" data-remaining-suit="clubs"></span></div>
+            </div>
+            <button id="fill-last-hand-button" class="button button-secondary fill-last-hand-button" type="button" disabled>Fyll sista handen</button>
+          </section>
 
           <div class="board" aria-label="Bridgebord med en exempelgiv">
             <div class="table-felt" aria-hidden="true"></div>
