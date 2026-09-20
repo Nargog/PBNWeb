@@ -77,7 +77,13 @@ function parsePbnFile(pbnText) {
     const tagName = match[1].toLowerCase();
     const tagValue = match[2];
 
-    if (tagName === "board") {
+    if (tagName === "event") {
+      game.event = unescapeTagValue(tagValue);
+    } else if (tagName === "site") {
+      game.site = unescapeTagValue(tagValue);
+    } else if (tagName === "date") {
+      game.date = unescapeTagValue(tagValue);
+    } else if (tagName === "board") {
       game.board = unescapeTagValue(tagValue);
     } else if (tagName === "dealer") {
       game.dealer = unescapeTagValue(tagValue);
@@ -86,6 +92,9 @@ function parsePbnFile(pbnText) {
     } else if (tagName === "deal") {
       game.deal = tagValue;
       games.push({
+        event: game.event || "",
+        site: game.site || "",
+        date: game.date || "",
         board: game.board || "",
         dealer: game.dealer || "",
         vulnerable: game.vulnerable || "",
@@ -103,7 +112,7 @@ function parsePbnFile(pbnText) {
     throw new Error("Filen innehåller ingen Deal-tagg.");
   }
 
-  return [{ board: "", dealer: "", vulnerable: "", deal: text }];
+  return [{ event: "", site: "", date: "", board: "", dealer: "", vulnerable: "", deal: text }];
 }
 
 function unescapeTagValue(value) {

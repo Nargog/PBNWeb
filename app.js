@@ -5,10 +5,18 @@ const exampleDealValue =
 const result = document.querySelector("#validation-result");
 const newCollectionButton = document.querySelector("#new-collection-button");
 const openButton = document.querySelector("#open-pbn-button");
+const pasteDealButton = document.querySelector("#paste-deal-button");
 const exportButton = document.querySelector("#export-pbn-button");
 const fileInput = document.querySelector("#pbn-file-input");
 const filename = document.querySelector("#selected-filename");
+const collectionInfo = document.querySelector("#collection-info");
+const collectionEventInput = document.querySelector("#collection-event");
+const collectionSiteInput = document.querySelector("#collection-site");
+const collectionDateInput = document.querySelector("#collection-date");
 const addDealButton = document.querySelector("#add-deal-button");
+const pasteDealPanel = document.querySelector("#paste-deal-panel");
+const pasteDealValue = document.querySelector("#paste-deal-value");
+const addPastedDealButton = document.querySelector("#add-pasted-deal-button");
 const boardNavigation = document.querySelector("#board-navigation");
 const boardSelect = document.querySelector("#board-select");
 const dealCount = document.querySelector("#deal-count");
@@ -25,6 +33,7 @@ const fillLastHandButton = document.querySelector("#fill-last-hand-button");
 let games = [];
 let isNewCollection = false;
 let fillableSeat = null;
+let collectionMetadata = { event: "", site: "", date: "" };
 
 const suits = [
   { key: "spades", name: "Spader", symbol: "♠" },
@@ -153,6 +162,15 @@ function getBoardMetadata(boardNumberValue) {
   };
 }
 
+function getNextBoardNumber() {
+  const existingBoardNumbers = games
+    .map(game => Number(game.board))
+    .filter(board => Number.isInteger(board) && board > 0);
+  return existingBoardNumbers.length > 0
+    ? Math.max(...existingBoardNumbers) + 1
+    : 1;
+}
+
 function createEmptyHands() {
   const emptyHand = () => ({ spades: "", hearts: "", diamonds: "", clubs: "" });
   return {
@@ -161,6 +179,24 @@ function createEmptyHands() {
     south: emptyHand(),
     west: emptyHand()
   };
+}
+
+function normalizeHands(hands) {
+  const normalizedHands = {};
+
+  for (const player of players) {
+    const hand = hands[player.key];
+    if (hand === null) {
+      normalizedHands[player.key] = null;
+      continue;
+    }
+    normalizedHands[player.key] = {};
+    for (const suit of suits) {
+      normalizedHands[player.key][suit.key] = [...normalizeSuitRanks(hand[suit.key])].join(" ");
+    }
+  }
+
+  return normalizedHands;
 }
 
 function displayHands(deal) {
@@ -365,6 +401,18 @@ function getCollectionStatus() {
     : `Ny givsamling – ${games.length} givar`;
 }
 
+function showCollectionMetadata(metadata) {
+  collectionMetadata = metadata;
+  collectionEventInput.value = metadata.event;
+  collectionSiteInput.value = metadata.site;
+  collectionDateInput.value = metadata.date;
+  collectionInfo.hidden = false;
+}
+
+function pbnDateToHtml(date) {
+  return /^\d{4}\.\d{2}\.\d{2}$/.test(date) ? date.replaceAll(".", "-") : "";
+}
+
 function updateExportButton() {
   const hasValidManualDeal = games.some(game => game.validationState?.valid);
   exportButton.disabled = games.length === 0
@@ -403,7 +451,8 @@ function prepareGamesForExport() {
 }
 
 function downloadPbnFile(pbnText) {
-  const file = new Blob([pbnText], { type: "text/plain;charset=utf-8" });
+  const pbnBytes = encodePbnTextAsIso88591(pbnText);
+  const file = new Blob([pbnBytes], { type: "text/plain;charset=iso-8859-1" });
   const url = URL.createObjectURL(file);
   const link = document.createElement("a");
   link.href = url;
@@ -431,6 +480,41 @@ openButton.addEventListener("click", () => {
   fileInput.click();
 });
 
+pasteDealButton.addEventListener("click", () => {
+  pasteDealPanel.hidden = !pasteDealPanel.hidden;
+  if (!pasteDealPanel.hidden) {
+    pasteDealValue.focus();
+  }
+});
+
+addPastedDealButton.addEventListener("click", () => {
+  try {
+    const hands = normalizeHands(parseDealValue(pasteDealValue.value));
+    const validation = validateDeal(hands);
+    if (!validation.valid) {
+      showStatus(validation.errors.join("; "), false);
+      return;
+    }
+
+    const nextBoardNumber = getNextBoardNumber();
+    const metadata = getBoardMetadata(nextBoardNumber);
+    const newGame = {
+      board: String(nextBoardNumber),
+      dealer: metadata.dealer,
+      vulnerable: metadata.vulnerable,
+      hands,
+      unfinished: true,
+      validationState: { complete: true, valid: true, errors: [] }
+    };
+
+    pasteDealValue.value = "";
+    pasteDealPanel.hidden = true;
+    loadGames([...games, newGame], games.length);
+  } catch (error) {
+    showStatus(error.message, false);
+  }
+});
+
 exportButton.addEventListener("click", () => {
   const { exportGames, problemGames } = prepareGamesForExport();
   if (problemGames.length > 0) {
@@ -441,7 +525,11 @@ exportButton.addEventListener("click", () => {
     return;
   }
 
-  downloadPbnFile(createPbnText(exportGames));
+  try {
+    downloadPbnFile(createPbnText(exportGames, collectionMetadata));
+  } catch (error) {
+    showStatus(error.message, false);
+  }
 });
 
 newCollectionButton.addEventListener("click", () => {
@@ -465,6 +553,9 @@ newCollectionButton.addEventListener("click", () => {
   manualEntryStatus.textContent = "";
   fillableSeat = null;
   fillLastHandButton.disabled = true;
+  pasteDealPanel.hidden = true;
+  pasteDealValue.value = "";
+  showCollectionMetadata({ event: "", site: "", date: "" });
   updateExportButton();
   showCollectionStatus("Ny givsamling – 0 givar");
 });
@@ -474,12 +565,7 @@ addDealButton.addEventListener("click", () => {
     return;
   }
 
-  const existingBoardNumbers = games
-    .map(game => Number(game.board))
-    .filter(Number.isInteger);
-  const nextBoardNumber = existingBoardNumbers.length > 0
-    ? Math.max(...existingBoardNumbers) + 1
-    : 1;
+  const nextBoardNumber = getNextBoardNumber();
   const metadata = getBoardMetadata(nextBoardNumber);
   const newGame = {
     board: String(nextBoardNumber),
@@ -501,6 +587,18 @@ for (const input of handInputs) {
   input.addEventListener("input", () => updateManualEntry());
   input.addEventListener("blur", () => updateManualEntry(input));
 }
+
+collectionEventInput.addEventListener("input", () => {
+  collectionMetadata.event = collectionEventInput.value;
+});
+
+collectionSiteInput.addEventListener("input", () => {
+  collectionMetadata.site = collectionSiteInput.value;
+});
+
+collectionDateInput.addEventListener("input", () => {
+  collectionMetadata.date = collectionDateInput.value;
+});
 
 fillLastHandButton.addEventListener("click", () => {
   const game = games[Number(boardSelect.value) || 0];
@@ -539,13 +637,22 @@ fileInput.addEventListener("change", async () => {
   addDealButton.hidden = true;
   addDealButton.disabled = false;
   manualEntry.hidden = true;
+  pasteDealPanel.hidden = true;
+  pasteDealValue.value = "";
   fillableSeat = null;
   updateExportButton();
 
   try {
     const buffer = await file.arrayBuffer();
     const fileText = decodePbnFile(buffer);
-    loadGames(parsePbnFile(fileText));
+    const loadedGames = parsePbnFile(fileText);
+    const firstGame = loadedGames[0];
+    showCollectionMetadata({
+      event: firstGame.event || "",
+      site: firstGame.site || "",
+      date: pbnDateToHtml(firstGame.date || "")
+    });
+    loadGames(loadedGames);
   } catch (error) {
     clearHands();
     games = [];

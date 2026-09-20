@@ -1,11 +1,15 @@
 // Create a basic PBN document from complete bridge deals.
-function createPbnText(games) {
+function createPbnText(games, collectionMetadata = {}) {
+  const firstGame = games[0] || {};
+  const event = collectionMetadata.event ?? firstGame.event ?? "PBNWeb";
+  const site = collectionMetadata.site ?? firstGame.site ?? "";
+  const date = formatPbnDate(collectionMetadata.date ?? firstGame.date ?? "");
   const blocks = games.map(game => {
     const dealValue = createGameDealValue(game);
     const tags = [
-      '[Event "PBNWeb"]',
-      '[Site ""]',
-      '[Date ""]'
+      `[Event "${escapePbnTagValue(event)}"]`,
+      `[Site "${escapePbnTagValue(site)}"]`,
+      `[Date "${escapePbnTagValue(date)}"]`
     ];
 
     if (game.board) {
@@ -21,6 +25,26 @@ function createPbnText(games) {
   });
 
   return blocks.join("\r\n\r\n") + "\r\n";
+}
+
+function formatPbnDate(date) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.replaceAll("-", ".") : date;
+}
+
+function encodePbnTextAsIso88591(pbnText) {
+  const bytes = [];
+
+  for (const character of pbnText) {
+    const characterCode = character.codePointAt(0);
+    if (characterCode > 0xFF) {
+      throw new Error(
+        `Kan inte exportera PBN: tecknet '${character}' stöds inte av ISO-8859-1.`
+      );
+    }
+    bytes.push(characterCode);
+  }
+
+  return new Uint8Array(bytes);
 }
 
 // Imported games store a Deal string. Manually created games store parsed hands.

@@ -21,6 +21,7 @@
         <div class="actions" aria-label="Givsamling">
           <button id="new-collection-button" class="button button-primary" type="button">Ny givsamling</button>
           <button id="open-pbn-button" class="button button-secondary" type="button">Öppna PBN</button>
+          <button id="paste-deal-button" class="button button-secondary" type="button">Klistra in giv</button>
           <button id="export-pbn-button" class="button button-secondary" type="button" disabled>Exportera PBN</button>
           <input id="pbn-file-input" type="file" accept=".pbn,text/plain" hidden>
         </div>
@@ -42,12 +43,36 @@
 
           <p id="validation-result" class="validation-result" role="status" aria-live="polite"></p>
           <p id="selected-filename" class="selected-filename" hidden></p>
+          <div id="collection-info" class="collection-info" hidden>
+            <label>Tävling <input id="collection-event" type="text"></label>
+            <label>Plats <input id="collection-site" type="text"></label>
+            <label>Datum <input id="collection-date" type="date"></label>
+          </div>
           <div id="board-navigation" class="board-navigation" hidden>
             <label for="board-select">Välj giv</label>
             <select id="board-select"></select>
           </div>
           <p id="deal-count" class="deal-count">1 giv inläst</p>
           <button id="add-deal-button" class="button button-secondary add-deal-button" type="button" hidden>+ Lägg till giv</button>
+
+          <section id="paste-deal-panel" class="paste-deal-panel" aria-labelledby="paste-deal-heading" hidden>
+            <h3 id="paste-deal-heading">Klistra in giv</h3>
+            <label for="paste-deal-value">PBN Deal-värde</label>
+            <textarea id="paste-deal-value" rows="4" placeholder="N:3.AT.KT987.AQJ83 JT942.6543.AJ5.2 K5.K9872.63.T976 AQ876.QJ.Q42.K54"></textarea>
+            <button id="add-pasted-deal-button" class="button button-primary" type="button">Lägg till given</button>
+          </section>
+
+          <details class="entry-help">
+            <summary>Hur matar jag in givar?</summary>
+            <ul>
+              <li>Skapa en ny givsamling och använd handfälten för att mata in korten manuellt.</li>
+              <li>Du kan också klistra in ett Deal-värde med formatet <code>N:spader.hjärter.ruter.klöver …</code>.</li>
+              <li>Prefixet N, E, S eller W anger vilken hand som står först. De fyra händerna följer medurs.</li>
+              <li>Färgerna anges i ordningen spader, hjärter, ruter och klöver. T betyder 10 och en tom färg lämnas tom mellan två punkter.</li>
+              <li>Du kan öppna en befintlig PBN-fil och sedan lägga till fler givar genom att klistra in dem.</li>
+              <li>När alla givar är kompletta och korrekta kan hela samlingen exporteras med Exportera PBN.</li>
+            </ul>
+          </details>
 
           <section id="manual-entry" class="manual-entry" aria-labelledby="manual-entry-heading" hidden>
             <h3 id="manual-entry-heading">Mata in händer</h3>

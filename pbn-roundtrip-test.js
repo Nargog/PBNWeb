@@ -120,3 +120,35 @@
     throw new Error("PBN round-trip test failed");
   }
 }());
+
+(function runIso88591EncodingTest() {
+  const report = typeof print === "function"
+    ? print
+    : message => console.log(message);
+  const supportedText = "Nybörjartävling Åsa ÄÖåäö\r\n";
+  const encoded = encodePbnTextAsIso88591(supportedText);
+  const decoded = [...encoded].map(byte => String.fromCharCode(byte)).join("");
+  const expectedSwedishBytes = [0xC5, 0xC4, 0xD6, 0xE5, 0xE4, 0xF6];
+  const actualSwedishBytes = [...encodePbnTextAsIso88591("ÅÄÖåäö")];
+
+  if (decoded !== supportedText) {
+    throw new Error("ISO-8859-1 test failed: supported text changed during encoding");
+  }
+  if (actualSwedishBytes.some((byte, index) => byte !== expectedSwedishBytes[index])) {
+    throw new Error("ISO-8859-1 test failed: Swedish characters have incorrect bytes");
+  }
+
+  let unsupportedCharacterRejected = false;
+  try {
+    encodePbnTextAsIso88591("Nybörjartävling Åsa – ÄÖåäö");
+  } catch (error) {
+    unsupportedCharacterRejected = error.message ===
+      "Kan inte exportera PBN: tecknet '–' stöds inte av ISO-8859-1.";
+  }
+
+  if (!unsupportedCharacterRejected) {
+    throw new Error("ISO-8859-1 test failed: en dash was not rejected correctly");
+  }
+
+  report("ISO-8859-1 encoding: PASS");
+}());
