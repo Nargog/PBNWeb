@@ -14,9 +14,17 @@ const collectionEventInput = document.querySelector("#collection-event");
 const collectionSiteInput = document.querySelector("#collection-site");
 const collectionDateInput = document.querySelector("#collection-date");
 const addDealButton = document.querySelector("#add-deal-button");
+const deleteDealButton = document.querySelector("#delete-deal-button");
 const pasteDealPanel = document.querySelector("#paste-deal-panel");
 const pasteDealValue = document.querySelector("#paste-deal-value");
-const addPastedDealButton = document.querySelector("#add-pasted-deal-button");
+const usePastedDealButton = document.querySelector("#use-pasted-deal-button");
+const pasteDealChoice = document.querySelector("#paste-deal-choice");
+const replaceCurrentDealButton = document.querySelector("#replace-current-deal-button");
+const addPastedAsNewButton = document.querySelector("#add-pasted-as-new-button");
+const deleteDealPanel = document.querySelector("#delete-deal-panel");
+const deleteAndRenumberButton = document.querySelector("#delete-and-renumber-button");
+const leaveEmptyButton = document.querySelector("#leave-empty-button");
+const cancelDeleteButton = document.querySelector("#cancel-delete-button");
 const boardNavigation = document.querySelector("#board-navigation");
 const boardSelect = document.querySelector("#board-select");
 const dealCount = document.querySelector("#deal-count");
@@ -34,6 +42,7 @@ let games = [];
 let isNewCollection = false;
 let fillableSeat = null;
 let collectionMetadata = { event: "", site: "", date: "" };
+let pendingPastedHands = null;
 
 const suits = [
   { key: "spades", name: "Spader", symbol: "♠" },
@@ -88,18 +97,38 @@ function loadGames(newGames, selectedIndex = 0) {
     boardSelect.append(option);
   }
 
-  boardNavigation.hidden = games.length <= 1 && !isNewCollection;
+  boardNavigation.hidden = false;
   dealCount.textContent = games.length === 1
     ? "1 giv inläst"
     : `${games.length} givar inlästa`;
-  showGame(selectedIndex);
+  deleteDealButton.disabled = games.length === 0;
+  if (games.length > 0) {
+    showGame(Math.min(selectedIndex, games.length - 1));
+  } else {
+    showNoGame();
+  }
   updateExportButton();
+}
+
+function showNoGame() {
+  clearHands();
+  boardLabel.textContent = "Ingen giv";
+  boardNumber.textContent = "–";
+  metadataBoard.textContent = "–";
+  metadataDealer.textContent = "–";
+  metadataVulnerability.textContent = "–";
+  manualEntry.hidden = true;
+  fillableSeat = null;
+  fillLastHandButton.disabled = true;
 }
 
 function getBoardOptionText(game, index) {
   const label = game.board
     ? `Giv ${game.board}`
     : `Post ${index + 1} – Board saknas`;
+  if (game.unfinished && !gameHasAnyCards(game)) {
+    return `${label} – tom`;
+  }
   return game.validationState?.valid ? `${label}  ✓` : label;
 }
 
@@ -171,6 +200,26 @@ function getNextBoardNumber() {
     : 1;
 }
 
+function sortGamesNumerically(gamesToSort) {
+  return [...gamesToSort].sort((first, second) => {
+    const firstBoard = Number(first.board);
+    const secondBoard = Number(second.board);
+    const firstIsNumber = Number.isInteger(firstBoard) && firstBoard > 0;
+    const secondIsNumber = Number.isInteger(secondBoard) && secondBoard > 0;
+
+    if (firstIsNumber && secondIsNumber) {
+      return firstBoard - secondBoard;
+    }
+    if (firstIsNumber) {
+      return -1;
+    }
+    if (secondIsNumber) {
+      return 1;
+    }
+    return 0;
+  });
+}
+
 function createEmptyHands() {
   const emptyHand = () => ({ spades: "", hearts: "", diamonds: "", clubs: "" });
   return {
@@ -197,6 +246,63 @@ function normalizeHands(hands) {
   }
 
   return normalizedHands;
+}
+
+function gameHasAnyCards(game) {
+  if (!game) {
+    return false;
+  }
+
+  try {
+    const hands = game.hands || parseDealValue(game.deal);
+    return players.some(player => {
+      const hand = hands[player.key];
+      return hand !== null && suits.some(suit => hand[suit.key].replace(/\s/g, "") !== "");
+    });
+  } catch (error) {
+    return true;
+  }
+}
+
+function createGameFromPastedHands(hands) {
+  const nextBoardNumber = getNextBoardNumber();
+  const metadata = getBoardMetadata(nextBoardNumber);
+  return {
+    board: String(nextBoardNumber),
+    dealer: metadata.dealer,
+    vulnerable: metadata.vulnerable,
+    hands,
+    unfinished: true,
+    validationState: { complete: true, valid: true, errors: [] }
+  };
+}
+
+function replaceCurrentGameHands(hands) {
+  const selectedIndex = Number(boardSelect.value) || 0;
+  const updatedGame = {
+    ...games[selectedIndex],
+    hands,
+    unfinished: true,
+    validationState: { complete: true, valid: true, errors: [] }
+  };
+  games[selectedIndex] = updatedGame;
+  const sortedGames = sortGamesNumerically(games);
+  finishPasting();
+  loadGames(sortedGames, sortedGames.indexOf(updatedGame));
+}
+
+function addPastedHandsAsNewGame(hands) {
+  const newGame = createGameFromPastedHands(hands);
+  const sortedGames = sortGamesNumerically([...games, newGame]);
+  finishPasting();
+  loadGames(sortedGames, sortedGames.indexOf(newGame));
+}
+
+function finishPasting() {
+  pendingPastedHands = null;
+  pasteDealValue.value = "";
+  pasteDealChoice.hidden = true;
+  pasteDealPanel.hidden = true;
 }
 
 function displayHands(deal) {
@@ -396,6 +502,9 @@ function showCollectionStatus(message) {
 }
 
 function getCollectionStatus() {
+  if (!isNewCollection) {
+    return games.length === 1 ? "1 giv inläst" : `${games.length} givar inlästa`;
+  }
   return games.length === 1
     ? "Ny givsamling – 1 giv"
     : `Ny givsamling – ${games.length} givar`;
@@ -481,13 +590,16 @@ openButton.addEventListener("click", () => {
 });
 
 pasteDealButton.addEventListener("click", () => {
+  deleteDealPanel.hidden = true;
   pasteDealPanel.hidden = !pasteDealPanel.hidden;
+  pendingPastedHands = null;
+  pasteDealChoice.hidden = true;
   if (!pasteDealPanel.hidden) {
     pasteDealValue.focus();
   }
 });
 
-addPastedDealButton.addEventListener("click", () => {
+usePastedDealButton.addEventListener("click", () => {
   try {
     const hands = normalizeHands(parseDealValue(pasteDealValue.value));
     const validation = validateDeal(hands);
@@ -496,22 +608,29 @@ addPastedDealButton.addEventListener("click", () => {
       return;
     }
 
-    const nextBoardNumber = getNextBoardNumber();
-    const metadata = getBoardMetadata(nextBoardNumber);
-    const newGame = {
-      board: String(nextBoardNumber),
-      dealer: metadata.dealer,
-      vulnerable: metadata.vulnerable,
-      hands,
-      unfinished: true,
-      validationState: { complete: true, valid: true, errors: [] }
-    };
-
-    pasteDealValue.value = "";
-    pasteDealPanel.hidden = true;
-    loadGames([...games, newGame], games.length);
+    const currentGame = games[Number(boardSelect.value) || 0];
+    if (!currentGame) {
+      addPastedHandsAsNewGame(hands);
+    } else if (!gameHasAnyCards(currentGame)) {
+      replaceCurrentGameHands(hands);
+    } else {
+      pendingPastedHands = hands;
+      pasteDealChoice.hidden = false;
+    }
   } catch (error) {
     showStatus(error.message, false);
+  }
+});
+
+replaceCurrentDealButton.addEventListener("click", () => {
+  if (pendingPastedHands) {
+    replaceCurrentGameHands(pendingPastedHands);
+  }
+});
+
+addPastedAsNewButton.addEventListener("click", () => {
+  if (pendingPastedHands) {
+    addPastedHandsAsNewGame(pendingPastedHands);
   }
 });
 
@@ -537,7 +656,7 @@ newCollectionButton.addEventListener("click", () => {
   games = [];
   clearHands();
   boardSelect.replaceChildren();
-  boardNavigation.hidden = true;
+  boardNavigation.hidden = false;
   filename.textContent = "";
   filename.hidden = true;
   fileInput.value = "";
@@ -547,24 +666,22 @@ newCollectionButton.addEventListener("click", () => {
   metadataDealer.textContent = "–";
   metadataVulnerability.textContent = "–";
   dealCount.textContent = "0 givar inlästa";
-  addDealButton.hidden = false;
-  addDealButton.disabled = false;
+  deleteDealButton.disabled = true;
   manualEntry.hidden = true;
   manualEntryStatus.textContent = "";
   fillableSeat = null;
   fillLastHandButton.disabled = true;
   pasteDealPanel.hidden = true;
   pasteDealValue.value = "";
+  pasteDealChoice.hidden = true;
+  deleteDealPanel.hidden = true;
+  pendingPastedHands = null;
   showCollectionMetadata({ event: "", site: "", date: "" });
   updateExportButton();
   showCollectionStatus("Ny givsamling – 0 givar");
 });
 
 addDealButton.addEventListener("click", () => {
-  if (!isNewCollection) {
-    return;
-  }
-
   const nextBoardNumber = getNextBoardNumber();
   const metadata = getBoardMetadata(nextBoardNumber);
   const newGame = {
@@ -576,10 +693,83 @@ addDealButton.addEventListener("click", () => {
     validationState: { complete: false, valid: false, errors: [] }
   };
 
-  loadGames([...games, newGame], games.length);
+  const sortedGames = sortGamesNumerically([...games, newGame]);
+  deleteDealPanel.hidden = true;
+  loadGames(sortedGames, sortedGames.indexOf(newGame));
+});
+
+deleteDealButton.addEventListener("click", () => {
+  if (games.length === 0) {
+    return;
+  }
+  finishPasting();
+  deleteDealPanel.hidden = false;
+});
+
+deleteAndRenumberButton.addEventListener("click", () => {
+  const selectedGame = games[Number(boardSelect.value) || 0];
+  if (!selectedGame) {
+    return;
+  }
+
+  const sortedGames = sortGamesNumerically(games);
+  const selectedIndex = sortedGames.indexOf(selectedGame);
+  const deletedBoardNumber = Number(selectedGame.board);
+  const remainingGames = sortedGames.filter(game => game !== selectedGame);
+
+  if (Number.isInteger(deletedBoardNumber) && deletedBoardNumber > 0) {
+    for (const game of remainingGames) {
+      const board = Number(game.board);
+      if (Number.isInteger(board) && board > deletedBoardNumber) {
+        const newBoard = board - 1;
+        const metadata = getBoardMetadata(newBoard);
+        game.board = String(newBoard);
+        game.dealer = metadata.dealer;
+        game.vulnerable = metadata.vulnerable;
+      }
+    }
+  }
+
+  deleteDealPanel.hidden = true;
+  const updatedGames = sortGamesNumerically(remainingGames);
+  loadGames(updatedGames, Math.max(0, selectedIndex - 1));
+  if (updatedGames.length === 0) {
+    showCollectionStatus(isNewCollection ? "Ny givsamling – 0 givar" : "0 givar inlästa");
+  }
+});
+
+leaveEmptyButton.addEventListener("click", () => {
+  const selectedIndex = Number(boardSelect.value) || 0;
+  const game = games[selectedIndex];
+  if (!game) {
+    return;
+  }
+
+  const board = Number(game.board);
+  const metadata = Number.isInteger(board) && board > 0
+    ? getBoardMetadata(board)
+    : { dealer: game.dealer, vulnerable: game.vulnerable };
+  const emptyGame = {
+    ...game,
+    dealer: metadata.dealer,
+    vulnerable: metadata.vulnerable,
+    hands: createEmptyHands(),
+    unfinished: true,
+    validationState: { complete: false, valid: false, errors: [] }
+  };
+  games[selectedIndex] = emptyGame;
+
+  deleteDealPanel.hidden = true;
+  const sortedGames = sortGamesNumerically(games);
+  loadGames(sortedGames, sortedGames.indexOf(emptyGame));
+});
+
+cancelDeleteButton.addEventListener("click", () => {
+  deleteDealPanel.hidden = true;
 });
 
 boardSelect.addEventListener("change", () => {
+  deleteDealPanel.hidden = true;
   showGame(Number(boardSelect.value));
 });
 
@@ -634,11 +824,12 @@ fileInput.addEventListener("change", async () => {
   filename.textContent = file.name;
   filename.hidden = false;
   isNewCollection = false;
-  addDealButton.hidden = true;
-  addDealButton.disabled = false;
   manualEntry.hidden = true;
   pasteDealPanel.hidden = true;
   pasteDealValue.value = "";
+  pasteDealChoice.hidden = true;
+  deleteDealPanel.hidden = true;
+  pendingPastedHands = null;
   fillableSeat = null;
   updateExportButton();
 

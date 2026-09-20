@@ -21,8 +21,21 @@
         <div class="actions" aria-label="Givsamling">
           <button id="new-collection-button" class="button button-primary" type="button">Ny givsamling</button>
           <button id="open-pbn-button" class="button button-secondary" type="button">Öppna PBN</button>
-          <button id="paste-deal-button" class="button button-secondary" type="button">Klistra in giv</button>
           <button id="export-pbn-button" class="button button-secondary" type="button" disabled>Exportera PBN</button>
+          <details class="collection-help">
+            <summary class="button button-secondary">Hjälp</summary>
+            <div>
+              <h3>Hur matar jag in givar?</h3>
+              <ul>
+                <li>Skapa en ny givsamling och använd handfälten för att mata in korten manuellt.</li>
+                <li>Du kan också klistra in ett Deal-värde med formatet <code>N:spader.hjärter.ruter.klöver …</code>.</li>
+                <li>Prefixet N, E, S eller W anger vilken hand som står först. De fyra händerna följer medurs.</li>
+                <li>Färgerna anges i ordningen spader, hjärter, ruter och klöver. T betyder 10 och en tom färg lämnas tom mellan två punkter.</li>
+                <li>Du kan öppna en befintlig PBN-fil och sedan lägga till fler givar.</li>
+                <li>När alla givar är kompletta och korrekta kan hela samlingen exporteras med Exportera PBN.</li>
+              </ul>
+            </div>
+          </details>
           <input id="pbn-file-input" type="file" accept=".pbn,text/plain" hidden>
         </div>
       </header>
@@ -49,30 +62,39 @@
             <label>Datum <input id="collection-date" type="date"></label>
           </div>
           <div id="board-navigation" class="board-navigation" hidden>
-            <label for="board-select">Välj giv</label>
-            <select id="board-select"></select>
+            <div class="board-selector">
+              <label for="board-select">Välj giv</label>
+              <select id="board-select"></select>
+            </div>
+            <div class="board-actions" aria-label="Åtgärder för giv">
+              <button id="add-deal-button" class="button button-secondary" type="button">+ Ny giv</button>
+              <button id="paste-deal-button" class="button button-secondary" type="button">Klistra in giv</button>
+              <button id="delete-deal-button" class="button button-secondary" type="button">Ta bort giv</button>
+            </div>
           </div>
           <p id="deal-count" class="deal-count">1 giv inläst</p>
-          <button id="add-deal-button" class="button button-secondary add-deal-button" type="button" hidden>+ Lägg till giv</button>
 
           <section id="paste-deal-panel" class="paste-deal-panel" aria-labelledby="paste-deal-heading" hidden>
             <h3 id="paste-deal-heading">Klistra in giv</h3>
             <label for="paste-deal-value">PBN Deal-värde</label>
             <textarea id="paste-deal-value" rows="4" placeholder="N:3.AT.KT987.AQJ83 JT942.6543.AJ5.2 K5.K9872.63.T976 AQ876.QJ.Q42.K54"></textarea>
-            <button id="add-pasted-deal-button" class="button button-primary" type="button">Lägg till given</button>
+            <button id="use-pasted-deal-button" class="button button-primary" type="button">Använd given</button>
+            <div id="paste-deal-choice" class="paste-deal-choice" hidden>
+              <p>Den aktuella given innehåller redan kort. Vad vill du göra?</p>
+              <button id="replace-current-deal-button" class="button button-secondary" type="button">Ersätt aktuell giv</button>
+              <button id="add-pasted-as-new-button" class="button button-secondary" type="button">Lägg till som ny giv</button>
+            </div>
           </section>
 
-          <details class="entry-help">
-            <summary>Hur matar jag in givar?</summary>
-            <ul>
-              <li>Skapa en ny givsamling och använd handfälten för att mata in korten manuellt.</li>
-              <li>Du kan också klistra in ett Deal-värde med formatet <code>N:spader.hjärter.ruter.klöver …</code>.</li>
-              <li>Prefixet N, E, S eller W anger vilken hand som står först. De fyra händerna följer medurs.</li>
-              <li>Färgerna anges i ordningen spader, hjärter, ruter och klöver. T betyder 10 och en tom färg lämnas tom mellan två punkter.</li>
-              <li>Du kan öppna en befintlig PBN-fil och sedan lägga till fler givar genom att klistra in dem.</li>
-              <li>När alla givar är kompletta och korrekta kan hela samlingen exporteras med Exportera PBN.</li>
-            </ul>
-          </details>
+          <section id="delete-deal-panel" class="delete-deal-panel" aria-labelledby="delete-deal-heading" hidden>
+            <h3 id="delete-deal-heading">Ta bort giv</h3>
+            <p>Vad vill du göra med den valda given?</p>
+            <div class="delete-deal-actions">
+              <button id="delete-and-renumber-button" class="button button-primary" type="button">Ta bort och numrera om</button>
+              <button id="leave-empty-button" class="button button-secondary" type="button">Lämna platsen tom</button>
+              <button id="cancel-delete-button" class="button button-secondary" type="button">Avbryt</button>
+            </div>
+          </section>
 
           <section id="manual-entry" class="manual-entry" aria-labelledby="manual-entry-heading" hidden>
             <h3 id="manual-entry-heading">Mata in händer</h3>

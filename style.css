@@ -28,6 +28,48 @@ body {
   gap: 16px;
 }
 
+.collection-help {
+  position: relative;
+}
+
+.collection-help summary {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+}
+
+.collection-help summary::-webkit-details-marker {
+  display: none;
+}
+
+.collection-help > div {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(520px, calc(100vw - 56px));
+  padding: 18px;
+  border: 1px solid #dce6dd;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(17, 52, 36, 0.14);
+  font-size: 0.9rem;
+}
+
+.collection-help h3 {
+  margin-bottom: 10px;
+}
+
+.collection-help ul {
+  margin-bottom: 0;
+  padding-left: 22px;
+}
+
+.collection-help li + li {
+  margin-top: 6px;
+}
+
 .page-header {
   margin-bottom: 48px;
   flex-wrap: wrap;
@@ -192,10 +234,20 @@ h2 {
 .board-navigation {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
   font-size: 0.9rem;
   font-weight: 700;
+}
+
+.board-selector,
+.board-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .board-navigation[hidden] {
@@ -217,20 +269,50 @@ h2 {
   font-size: 0.85rem;
 }
 
-.add-deal-button {
-  margin-bottom: 18px;
-}
-
-.add-deal-button[hidden] {
-  display: none;
-}
-
 .paste-deal-panel {
   margin-bottom: 18px;
   padding: 16px;
   border: 1px solid #dce6dd;
   border-radius: 10px;
   background: #f8faf8;
+}
+
+.delete-deal-panel {
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid #e4caca;
+  border-radius: 10px;
+  background: #fff8f8;
+}
+
+.delete-deal-panel[hidden] {
+  display: none;
+}
+
+.delete-deal-panel h3,
+.delete-deal-panel p {
+  margin-bottom: 10px;
+}
+
+.delete-deal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.paste-deal-choice {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #dce6dd;
+}
+
+.paste-deal-choice[hidden] {
+  display: none;
+}
+
+.paste-deal-choice p {
+  margin-bottom: 10px;
+  font-weight: 700;
 }
 
 .paste-deal-panel[hidden] {
@@ -261,29 +343,6 @@ h2 {
   background: #fff;
   font: inherit;
   resize: vertical;
-}
-
-.entry-help {
-  margin-bottom: 20px;
-  color: #43584f;
-  font-size: 0.9rem;
-}
-
-.entry-help summary {
-  width: fit-content;
-  cursor: pointer;
-  color: #245a46;
-  font-weight: 700;
-}
-
-.entry-help ul {
-  max-width: 720px;
-  margin-bottom: 0;
-  padding-left: 22px;
-}
-
-.entry-help li + li {
-  margin-top: 6px;
 }
 
 .manual-entry {
