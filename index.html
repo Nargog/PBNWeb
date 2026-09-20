@@ -18,61 +18,65 @@
           <h1>PBN Editor</h1>
         </div>
 
-        <div class="actions" aria-label="Givsamling">
-          <button id="new-collection-button" class="button button-primary" type="button">Ny givsamling</button>
-          <button id="open-pbn-button" class="button button-secondary" type="button">Öppna PBN</button>
-          <button id="export-pbn-button" class="button button-secondary" type="button" disabled>Exportera PBN</button>
-          <details class="collection-help">
-            <summary class="button button-secondary">Hjälp</summary>
-            <div>
-              <h3>Hur matar jag in givar?</h3>
-              <ul>
-                <li>Skapa en ny givsamling och använd handfälten för att mata in korten manuellt.</li>
-                <li>Du kan också klistra in ett Deal-värde med formatet <code>N:spader.hjärter.ruter.klöver …</code>.</li>
-                <li>Prefixet N, E, S eller W anger vilken hand som står först. De fyra händerna följer medurs.</li>
-                <li>Färgerna anges i ordningen spader, hjärter, ruter och klöver. T betyder 10 och en tom färg lämnas tom mellan två punkter.</li>
-                <li>Du kan öppna en befintlig PBN-fil och sedan lägga till fler givar.</li>
-                <li>När alla givar är kompletta och korrekta kan hela samlingen exporteras med Exportera PBN.</li>
-              </ul>
-            </div>
-          </details>
-          <input id="pbn-file-input" type="file" accept=".pbn,text/plain" hidden>
-        </div>
+        <details class="collection-help">
+          <summary class="button button-secondary">Hur använder jag PBNWeb?</summary>
+          <div>
+            <ol>
+              <li>Skapa eller öppna en givsamling.</li>
+              <li>Mata in eller klistra in givar.</li>
+              <li>Exportera den färdiga samlingen.</li>
+            </ol>
+          </div>
+        </details>
       </header>
 
       <main>
-        <section class="deal-section" aria-labelledby="deal-heading">
-          <div class="section-heading">
-            <div>
-              <p id="current-board-label" class="eyebrow">Giv 1</p>
-              <h2 id="deal-heading">Exempelgiv</h2>
-            </div>
-            <dl class="deal-metadata" aria-label="Givinformation">
-              <div><dt>Giv</dt><dd id="metadata-board">1</dd></div>
-              <div><dt>Givare</dt><dd id="metadata-dealer">Öst</dd></div>
-              <div><dt>Zon</dt><dd id="metadata-vulnerability">Ingen</dd></div>
-            </dl>
+        <section class="collection-section" aria-labelledby="collection-heading">
+          <h2 id="collection-heading">1. Givsamling</h2>
+          <div class="actions" aria-label="Givsamling">
+            <button id="new-collection-button" class="button button-primary" type="button">Ny givsamling</button>
+            <button id="open-pbn-button" class="button button-secondary" type="button">Öppna PBN</button>
+            <input id="pbn-file-input" type="file" accept=".pbn,text/plain" hidden>
           </div>
-
-          <p id="validation-result" class="validation-result" role="status" aria-live="polite"></p>
           <p id="selected-filename" class="selected-filename" hidden></p>
-          <div id="collection-info" class="collection-info" hidden>
+          <div id="collection-info" class="collection-info">
             <label>Tävling <input id="collection-event" type="text"></label>
             <label>Plats <input id="collection-site" type="text"></label>
             <label>Datum <input id="collection-date" type="date"></label>
           </div>
+        </section>
+
+        <section class="deal-section" aria-labelledby="deal-heading">
+          <h2 id="deal-heading">2. Givar</h2>
+          <p class="board-information">
+            <strong id="current-board-label">Giv 1 av 1</strong>
+            <span>· Givare: <span id="metadata-dealer">Öst</span></span>
+            <span>· Zon: <span id="metadata-vulnerability">Ingen</span></span>
+          </p>
           <div id="board-navigation" class="board-navigation" hidden>
             <div class="board-selector">
               <label for="board-select">Välj giv</label>
               <select id="board-select"></select>
             </div>
             <div class="board-actions" aria-label="Åtgärder för giv">
-              <button id="add-deal-button" class="button button-secondary" type="button">+ Ny giv</button>
+              <button id="add-deal-button" class="button button-secondary" type="button">Ny giv</button>
               <button id="paste-deal-button" class="button button-secondary" type="button">Klistra in giv</button>
               <button id="delete-deal-button" class="button button-secondary" type="button">Ta bort giv</button>
             </div>
           </div>
-          <p id="deal-count" class="deal-count">1 giv inläst</p>
+          <details class="paste-help">
+            <summary>Format för inklistring</summary>
+            <div>
+              <p><code>N:3.AT.KT987.AQJ83 JT942.6543.AJ5.2 K5.K9872.63.T976 AQ876.QJ.Q42.K54</code></p>
+              <ul>
+                <li>N/E/S/W anger första handen: Nord/Öst/Syd/Väst. Händerna följer medurs.</li>
+                <li>Färgordningen är spader.hjärter.ruter.klöver.</li>
+                <li>T betyder 10.</li>
+                <li>En tom färg anges med en tom position mellan punkterna, till exempel AK..QJ.987.</li>
+              </ul>
+            </div>
+          </details>
+          <p id="validation-result" class="validation-result" role="status" aria-live="polite"></p>
 
           <section id="paste-deal-panel" class="paste-deal-panel" aria-labelledby="paste-deal-heading" hidden>
             <h3 id="paste-deal-heading">Klistra in giv</h3>
@@ -96,75 +100,79 @@
             </div>
           </section>
 
-          <section id="manual-entry" class="manual-entry" aria-labelledby="manual-entry-heading" hidden>
-            <h3 id="manual-entry-heading">Mata in händer</h3>
-            <div class="hand-entry-grid">
-              <fieldset class="hand-entry">
-                <legend>Nord <span data-hand-count="north">0/13</span></legend>
+          <p class="table-instruction">Klicka på en hand för att mata in eller ändra kort.</p>
+          <div class="deal-workspace">
+            <div class="board" aria-label="Bridgebord med vald giv">
+              <div class="table-felt" aria-hidden="true"></div>
+
+              <button type="button" class="hand hand-north" data-edit-seat="north" aria-label="Redigera Nord" aria-controls="editor-north" aria-expanded="false">
+                <span class="hand-name">Nord</span>
+                <span class="suits" data-seat="north"></span>
+              </button>
+
+              <button type="button" class="hand hand-east" data-edit-seat="east" aria-label="Redigera Öst" aria-controls="editor-east" aria-expanded="false">
+                <span class="hand-name">Öst</span>
+                <span class="suits" data-seat="east"></span>
+              </button>
+
+              <button type="button" class="hand hand-south" data-edit-seat="south" aria-label="Redigera Syd" aria-controls="editor-south" aria-expanded="false">
+                <span class="hand-name">Syd</span>
+                <span class="suits" data-seat="south"></span>
+              </button>
+
+              <button type="button" class="hand hand-west" data-edit-seat="west" aria-label="Redigera Väst" aria-controls="editor-west" aria-expanded="false">
+                <span class="hand-name">Väst</span>
+                <span class="suits" data-seat="west"></span>
+              </button>
+
+              <div id="board-number" class="board-center" aria-hidden="true">1</div>
+            </div>
+            <section id="manual-entry" class="manual-entry" aria-label="Redigera vald hand" hidden>
+              <fieldset id="editor-north" class="hand-entry" data-editor-seat="north" hidden>
+                <legend>Redigera Nord <span data-hand-count="north">0/13</span></legend>
                 <label><span>♠</span><input data-entry-seat="north" data-entry-suit="spades" type="text" aria-label="Nords spader" autocomplete="off" spellcheck="false"></label>
                 <label><span class="red-suit">♥</span><input data-entry-seat="north" data-entry-suit="hearts" type="text" aria-label="Nords hjärter" autocomplete="off" spellcheck="false"></label>
                 <label><span class="red-suit">♦</span><input data-entry-seat="north" data-entry-suit="diamonds" type="text" aria-label="Nords ruter" autocomplete="off" spellcheck="false"></label>
                 <label><span>♣</span><input data-entry-seat="north" data-entry-suit="clubs" type="text" aria-label="Nords klöver" autocomplete="off" spellcheck="false"></label>
               </fieldset>
-              <fieldset class="hand-entry">
-                <legend>Öst <span data-hand-count="east">0/13</span></legend>
+              <fieldset id="editor-east" class="hand-entry" data-editor-seat="east" hidden>
+                <legend>Redigera Öst <span data-hand-count="east">0/13</span></legend>
                 <label><span>♠</span><input data-entry-seat="east" data-entry-suit="spades" type="text" aria-label="Östs spader" autocomplete="off" spellcheck="false"></label>
                 <label><span class="red-suit">♥</span><input data-entry-seat="east" data-entry-suit="hearts" type="text" aria-label="Östs hjärter" autocomplete="off" spellcheck="false"></label>
                 <label><span class="red-suit">♦</span><input data-entry-seat="east" data-entry-suit="diamonds" type="text" aria-label="Östs ruter" autocomplete="off" spellcheck="false"></label>
                 <label><span>♣</span><input data-entry-seat="east" data-entry-suit="clubs" type="text" aria-label="Östs klöver" autocomplete="off" spellcheck="false"></label>
               </fieldset>
-              <fieldset class="hand-entry">
-                <legend>Syd <span data-hand-count="south">0/13</span></legend>
+              <fieldset id="editor-south" class="hand-entry" data-editor-seat="south" hidden>
+                <legend>Redigera Syd <span data-hand-count="south">0/13</span></legend>
                 <label><span>♠</span><input data-entry-seat="south" data-entry-suit="spades" type="text" aria-label="Syds spader" autocomplete="off" spellcheck="false"></label>
                 <label><span class="red-suit">♥</span><input data-entry-seat="south" data-entry-suit="hearts" type="text" aria-label="Syds hjärter" autocomplete="off" spellcheck="false"></label>
                 <label><span class="red-suit">♦</span><input data-entry-seat="south" data-entry-suit="diamonds" type="text" aria-label="Syds ruter" autocomplete="off" spellcheck="false"></label>
                 <label><span>♣</span><input data-entry-seat="south" data-entry-suit="clubs" type="text" aria-label="Syds klöver" autocomplete="off" spellcheck="false"></label>
               </fieldset>
-              <fieldset class="hand-entry">
-                <legend>Väst <span data-hand-count="west">0/13</span></legend>
+              <fieldset id="editor-west" class="hand-entry" data-editor-seat="west" hidden>
+                <legend>Redigera Väst <span data-hand-count="west">0/13</span></legend>
                 <label><span>♠</span><input data-entry-seat="west" data-entry-suit="spades" type="text" aria-label="Västs spader" autocomplete="off" spellcheck="false"></label>
                 <label><span class="red-suit">♥</span><input data-entry-seat="west" data-entry-suit="hearts" type="text" aria-label="Västs hjärter" autocomplete="off" spellcheck="false"></label>
                 <label><span class="red-suit">♦</span><input data-entry-seat="west" data-entry-suit="diamonds" type="text" aria-label="Västs ruter" autocomplete="off" spellcheck="false"></label>
                 <label><span>♣</span><input data-entry-seat="west" data-entry-suit="clubs" type="text" aria-label="Västs klöver" autocomplete="off" spellcheck="false"></label>
               </fieldset>
-            </div>
-            <p id="manual-entry-status" class="manual-entry-status" role="status" aria-live="polite"></p>
-
-            <div class="card-bank" aria-labelledby="card-bank-heading">
-              <h3 id="card-bank-heading">Återstående kort</h3>
-              <div class="card-bank-row"><span>♠</span><span class="remaining-ranks" data-remaining-suit="spades"></span></div>
-              <div class="card-bank-row"><span class="red-suit">♥</span><span class="remaining-ranks" data-remaining-suit="hearts"></span></div>
-              <div class="card-bank-row"><span class="red-suit">♦</span><span class="remaining-ranks" data-remaining-suit="diamonds"></span></div>
-              <div class="card-bank-row"><span>♣</span><span class="remaining-ranks" data-remaining-suit="clubs"></span></div>
-            </div>
-            <button id="fill-last-hand-button" class="button button-secondary fill-last-hand-button" type="button" disabled>Fyll sista handen</button>
-          </section>
-
-          <div class="board" aria-label="Bridgebord med en exempelgiv">
-            <div class="table-felt" aria-hidden="true"></div>
-
-            <article class="hand hand-north" aria-labelledby="north-heading">
-              <h3 id="north-heading">Nord</h3>
-              <div class="suits" data-seat="north"></div>
-            </article>
-
-            <article class="hand hand-east" aria-labelledby="east-heading">
-              <h3 id="east-heading">Öst</h3>
-              <div class="suits" data-seat="east"></div>
-            </article>
-
-            <article class="hand hand-south" aria-labelledby="south-heading">
-              <h3 id="south-heading">Syd</h3>
-              <div class="suits" data-seat="south"></div>
-            </article>
-
-            <article class="hand hand-west" aria-labelledby="west-heading">
-              <h3 id="west-heading">Väst</h3>
-              <div class="suits" data-seat="west"></div>
-            </article>
-
-            <div id="board-number" class="board-center" aria-hidden="true">1</div>
+            </section>
           </div>
+          <p id="manual-entry-status" class="manual-entry-status" role="status" aria-live="polite"></p>
+
+          <div class="card-bank" aria-labelledby="card-bank-heading">
+            <h3 id="card-bank-heading">Återstående kort</h3>
+            <div class="card-bank-row"><span>♠</span><span class="remaining-ranks" data-remaining-suit="spades"></span></div>
+            <div class="card-bank-row"><span class="red-suit">♥</span><span class="remaining-ranks" data-remaining-suit="hearts"></span></div>
+            <div class="card-bank-row"><span class="red-suit">♦</span><span class="remaining-ranks" data-remaining-suit="diamonds"></span></div>
+            <div class="card-bank-row"><span>♣</span><span class="remaining-ranks" data-remaining-suit="clubs"></span></div>
+          </div>
+          <button id="fill-last-hand-button" class="button button-secondary fill-last-hand-button" type="button" disabled>Fyll sista handen</button>
+        </section>
+        <section class="export-section" aria-labelledby="export-heading">
+          <h2 id="export-heading">3. Kontrollera och exportera</h2>
+          <p id="collection-progress" class="collection-progress" role="status" aria-live="polite"></p>
+          <button id="export-pbn-button" class="button button-primary" type="button" aria-describedby="collection-progress" disabled>Exportera PBN</button>
         </section>
       </main>
     </div>

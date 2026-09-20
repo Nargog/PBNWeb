@@ -27,14 +27,16 @@ const leaveEmptyButton = document.querySelector("#leave-empty-button");
 const cancelDeleteButton = document.querySelector("#cancel-delete-button");
 const boardNavigation = document.querySelector("#board-navigation");
 const boardSelect = document.querySelector("#board-select");
-const dealCount = document.querySelector("#deal-count");
+const collectionProgress = document.querySelector("#collection-progress");
 const boardLabel = document.querySelector("#current-board-label");
 const boardNumber = document.querySelector("#board-number");
-const metadataBoard = document.querySelector("#metadata-board");
 const metadataDealer = document.querySelector("#metadata-dealer");
 const metadataVulnerability = document.querySelector("#metadata-vulnerability");
 const manualEntry = document.querySelector("#manual-entry");
 const manualEntryStatus = document.querySelector("#manual-entry-status");
+const handEditors = document.querySelectorAll("[data-editor-seat]");
+const handButtons = document.querySelectorAll("[data-edit-seat]");
+const dealWorkspace = document.querySelector(".deal-workspace");
 const handInputs = document.querySelectorAll("[data-entry-seat]");
 const fillLastHandButton = document.querySelector("#fill-last-hand-button");
 
@@ -67,25 +69,6 @@ function normalizeSuitRanks(value) {
   return [...sortedRanks, ...invalidCharacters].join("");
 }
 
-function showDeal(dealValue) {
-  clearHands();
-
-  try {
-    const deal = parseDealValue(dealValue);
-    displayHands(deal);
-
-    const validation = validateDeal(deal);
-    showStatus(
-      validation.valid
-        ? `✓ Given är korrekt – ${validation.uniqueCards} unika kort`
-        : validation.errors.join("; "),
-      validation.valid
-    );
-  } catch (error) {
-    showStatus(error.message, false);
-  }
-}
-
 function loadGames(newGames, selectedIndex = 0) {
   games = newGames;
   boardSelect.replaceChildren();
@@ -98,9 +81,6 @@ function loadGames(newGames, selectedIndex = 0) {
   }
 
   boardNavigation.hidden = false;
-  dealCount.textContent = games.length === 1
-    ? "1 giv inläst"
-    : `${games.length} givar inlästa`;
   deleteDealButton.disabled = games.length === 0;
   if (games.length > 0) {
     showGame(Math.min(selectedIndex, games.length - 1));
@@ -110,16 +90,23 @@ function loadGames(newGames, selectedIndex = 0) {
   updateExportButton();
 }
 
-function showNoGame() {
+function resetHandView() {
+  closeHandEditor();
   clearHands();
-  boardLabel.textContent = "Ingen giv";
-  boardNumber.textContent = "–";
-  metadataBoard.textContent = "–";
-  metadataDealer.textContent = "–";
-  metadataVulnerability.textContent = "–";
-  manualEntry.hidden = true;
+  displayHands(createEmptyHands());
+  manualEntryStatus.textContent = "";
+  for (const suit of suits) displayRemainingRanks(suit.key, new Set());
+  for (const button of handButtons) button.disabled = true;
   fillableSeat = null;
   fillLastHandButton.disabled = true;
+}
+
+function showNoGame() {
+  resetHandView();
+  boardLabel.textContent = "Ingen giv";
+  boardNumber.textContent = "–";
+  metadataDealer.textContent = "–";
+  metadataVulnerability.textContent = "–";
 }
 
 function getBoardOptionText(game, index) {
@@ -140,26 +127,55 @@ function refreshBoardOption(index) {
 }
 
 function showGame(index) {
+  closeHandEditor();
   const game = games[index];
   boardSelect.value = String(index);
   boardLabel.textContent = game.board
-    ? `Giv ${game.board}`
-    : `Post ${index + 1} – Board saknas`;
+    ? `Giv ${game.board} av ${games.length}`
+    : `Post ${index + 1} av ${games.length} – Board saknas`;
   boardNumber.textContent = game.board || "–";
-  metadataBoard.textContent = game.board || "–";
   metadataDealer.textContent = formatDealer(game.dealer);
   metadataVulnerability.textContent = formatVulnerability(game.vulnerable);
 
-  if (game.unfinished) {
-    clearHands();
-    displayHands(game.hands);
-    manualEntry.hidden = false;
-    syncHandInputs(game.hands);
+  try {
+    syncHandInputs(game.hands || parseDealValue(game.deal));
     updateManualEntry();
-  } else {
-    manualEntry.hidden = true;
-    showDeal(game.deal);
+    for (const button of handButtons) button.disabled = false;
+  } catch (error) {
+    resetHandView();
+    showStatus(error.message, false);
   }
+}
+
+function closeHandEditor() {
+  manualEntry.hidden = true;
+  dealWorkspace.classList.remove("editing-hand");
+  for (const editor of handEditors) editor.hidden = true;
+  for (const button of handButtons) button.setAttribute("aria-expanded", "false");
+}
+
+function editHand(seat) {
+  const game = games[Number(boardSelect.value) || 0];
+  if (!game) return;
+
+  // Use the existing manual-deal representation only when editing starts.
+  if (!game.unfinished) {
+    const hands = parseDealValue(game.deal);
+    const emptyHands = createEmptyHands();
+    for (const player of players) hands[player.key] ??= emptyHands[player.key];
+    game.hands = hands;
+    game.dealPrefix = game.deal.trim().split(":")[0].toUpperCase();
+    game.unfinished = true;
+    updateManualEntry();
+  }
+
+  manualEntry.hidden = false;
+  dealWorkspace.classList.add("editing-hand");
+  for (const editor of handEditors) editor.hidden = editor.dataset.editorSeat !== seat;
+  for (const button of handButtons) {
+    button.setAttribute("aria-expanded", String(button.dataset.editSeat === seat));
+  }
+  document.querySelector(`[data-entry-seat="${seat}"]`).focus();
 }
 
 function formatDealer(dealer) {
@@ -314,7 +330,7 @@ function displayHands(deal) {
 
 function displayHand(hand, cards) {
   for (const suit of suits) {
-    const row = document.createElement("div");
+    const row = document.createElement("span");
     row.className = suit.red ? "suit-row red" : "suit-row";
 
     const symbol = document.createElement("span");
@@ -337,16 +353,17 @@ function displayHand(hand, cards) {
 
 function syncHandInputs(hands) {
   for (const input of handInputs) {
-    input.value = hands[input.dataset.entrySeat][input.dataset.entrySuit].replaceAll(" ", "");
+    input.value = (hands[input.dataset.entrySeat]?.[input.dataset.entrySuit] || "").replaceAll(" ", "");
   }
 }
 
 function updateManualEntry(inputToNormalize = null) {
   const selectedIndex = Number(boardSelect.value) || 0;
-  const game = games[selectedIndex];
-  if (!game?.unfinished) {
-    return;
-  }
+  const selectedGame = games[selectedIndex];
+  if (!selectedGame) return;
+  // Preview imported hands through the same feedback logic without changing
+  // their stored Deal value, ranks or validation state merely by viewing them.
+  const game = selectedGame.unfinished ? selectedGame : { hands: createEmptyHands() };
 
   const errors = new Set();
   const handCounts = { north: 0, east: 0, south: 0, west: 0 };
@@ -363,9 +380,11 @@ function updateManualEntry(inputToNormalize = null) {
     const suitKey = input.dataset.entrySuit;
     const player = players.find(item => item.key === seatKey);
     const suit = suits.find(item => item.key === suitKey);
-    const enteredRanks = input === inputToNormalize
-      ? normalizeSuitRanks(input.value)
-      : input.value.toUpperCase().replace(/\s/g, "");
+    const enteredRanks = !selectedGame.unfinished
+      ? input.value.replace(/\s/g, "")
+      : input === inputToNormalize
+        ? normalizeSuitRanks(input.value)
+        : input.value.toUpperCase().replace(/\s/g, "");
     input.value = enteredRanks;
     input.classList.remove("input-error");
     game.hands[seatKey][suitKey] = [...enteredRanks].join(" ");
@@ -431,8 +450,8 @@ function updateManualEntry(inputToNormalize = null) {
     && allHandsHave13Cards
     && usedCards.size === 52;
 
-  if (dealIsComplete) {
-    const validation = validateDeal(game.hands);
+  if (dealIsComplete || !selectedGame.unfinished) {
+    const validation = validateDeal(selectedGame.unfinished ? game.hands : parseDealValue(selectedGame.deal));
     game.validationState = {
       complete: true,
       valid: validation.valid,
@@ -457,7 +476,7 @@ function updateManualEntry(inputToNormalize = null) {
 
   const emptyHands = players.filter(player => handCounts[player.key] === 0);
   const fullHands = players.filter(player => handCounts[player.key] === 13);
-  fillableSeat = errorMessages.length === 0
+  fillableSeat = selectedGame.unfinished && errorMessages.length === 0
     && fullHands.length === 3
     && emptyHands.length === 1
     && usedCards.size === 39
@@ -522,7 +541,28 @@ function pbnDateToHtml(date) {
   return /^\d{4}\.\d{2}\.\d{2}$/.test(date) ? date.replaceAll(".", "-") : "";
 }
 
+function updateCollectionProgress() {
+  const { exportGames, problemGames } = prepareGamesForExport();
+  const ready = games.length > 0 && problemGames.length === 0;
+  let message = `${exportGames.length} av ${games.length} givar kompletta`;
+  if (games.length === 0) {
+    message = "Samlingen är tom – lägg till en giv.";
+  } else if (ready) {
+    message = `✓ ${message} – redo att exportera`;
+  } else if (problemGames.length === 1) {
+    const emptyGame = games.find(game => !gameHasAnyCards(game));
+    message += ` – ${problemGames[0]} ${emptyGame ? "är tom" : "behöver kompletteras eller rättas"}`;
+  } else {
+    const names = formatBoardNames(problemGames.slice(0, 3));
+    const more = problemGames.length > 3 ? ` samt ${problemGames.length - 3} till` : "";
+    message += ` – ${names}${more} behöver kompletteras eller rättas`;
+  }
+  collectionProgress.textContent = message;
+  collectionProgress.classList.toggle("collection-ready", ready);
+}
+
 function updateExportButton() {
+  updateCollectionProgress();
   const hasValidManualDeal = games.some(game => game.validationState?.valid);
   exportButton.disabled = games.length === 0
     || (isNewCollection && !hasValidManualDeal);
@@ -641,6 +681,7 @@ exportButton.addEventListener("click", () => {
       `Kan inte exportera. ${formatBoardNames(problemGames)} måste kompletteras eller rättas.`,
       false
     );
+    result.scrollIntoView({ block: "center" });
     return;
   }
 
@@ -648,40 +689,27 @@ exportButton.addEventListener("click", () => {
     downloadPbnFile(createPbnText(exportGames, collectionMetadata));
   } catch (error) {
     showStatus(error.message, false);
+    result.scrollIntoView({ block: "center" });
   }
 });
 
 newCollectionButton.addEventListener("click", () => {
   isNewCollection = true;
   games = [];
-  clearHands();
-  boardSelect.replaceChildren();
-  boardNavigation.hidden = false;
   filename.textContent = "";
   filename.hidden = true;
   fileInput.value = "";
-  boardLabel.textContent = "Ingen giv";
-  boardNumber.textContent = "–";
-  metadataBoard.textContent = "–";
-  metadataDealer.textContent = "–";
-  metadataVulnerability.textContent = "–";
-  dealCount.textContent = "0 givar inlästa";
-  deleteDealButton.disabled = true;
-  manualEntry.hidden = true;
   manualEntryStatus.textContent = "";
-  fillableSeat = null;
-  fillLastHandButton.disabled = true;
   pasteDealPanel.hidden = true;
   pasteDealValue.value = "";
   pasteDealChoice.hidden = true;
   deleteDealPanel.hidden = true;
   pendingPastedHands = null;
   showCollectionMetadata({ event: "", site: "", date: "" });
-  updateExportButton();
-  showCollectionStatus("Ny givsamling – 0 givar");
+  addEmptyGame();
 });
 
-addDealButton.addEventListener("click", () => {
+function addEmptyGame() {
   const nextBoardNumber = getNextBoardNumber();
   const metadata = getBoardMetadata(nextBoardNumber);
   const newGame = {
@@ -696,7 +724,9 @@ addDealButton.addEventListener("click", () => {
   const sortedGames = sortGamesNumerically([...games, newGame]);
   deleteDealPanel.hidden = true;
   loadGames(sortedGames, sortedGames.indexOf(newGame));
-});
+}
+
+addDealButton.addEventListener("click", addEmptyGame);
 
 deleteDealButton.addEventListener("click", () => {
   if (games.length === 0) {
@@ -772,6 +802,10 @@ boardSelect.addEventListener("change", () => {
   deleteDealPanel.hidden = true;
   showGame(Number(boardSelect.value));
 });
+
+for (const button of handButtons) {
+  button.addEventListener("click", () => editHand(button.dataset.editSeat));
+}
 
 for (const input of handInputs) {
   input.addEventListener("input", () => updateManualEntry());
@@ -849,7 +883,7 @@ fileInput.addEventListener("change", async () => {
     games = [];
     boardSelect.replaceChildren();
     boardNavigation.hidden = true;
-    dealCount.textContent = "0 givar inlästa";
+    showNoGame();
     updateExportButton();
     showStatus(error.message, false);
   }
