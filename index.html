@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="pbn-reader.js" defer></script>
     <script src="pbn-validator.js" defer></script>
+    <script src="pbn-writer.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -20,6 +21,7 @@
         <div class="actions" aria-label="Givsamling">
           <button id="new-collection-button" class="button button-primary" type="button">Ny givsamling</button>
           <button id="open-pbn-button" class="button button-secondary" type="button">Öppna PBN</button>
+          <button id="export-pbn-button" class="button button-secondary" type="button" disabled>Exportera PBN</button>
           <input id="pbn-file-input" type="file" accept=".pbn,text/plain" hidden>
         </div>
       </header>
@@ -31,7 +33,11 @@
               <p id="current-board-label" class="eyebrow">Giv 1</p>
               <h2 id="deal-heading">Exempelgiv</h2>
             </div>
-            <p class="section-note">Fyra händer runt bordet</p>
+            <dl class="deal-metadata" aria-label="Givinformation">
+              <div><dt>Giv</dt><dd id="metadata-board">1</dd></div>
+              <div><dt>Givare</dt><dd id="metadata-dealer">Öst</dd></div>
+              <div><dt>Zon</dt><dd id="metadata-vulnerability">Ingen</dd></div>
+            </dl>
           </div>
 
           <p id="validation-result" class="validation-result" role="status" aria-live="polite"></p>

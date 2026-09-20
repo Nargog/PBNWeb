@@ -5,6 +5,7 @@ const exampleDealValue =
 const result = document.querySelector("#validation-result");
 const newCollectionButton = document.querySelector("#new-collection-button");
 const openButton = document.querySelector("#open-pbn-button");
+const exportButton = document.querySelector("#export-pbn-button");
 const fileInput = document.querySelector("#pbn-file-input");
 const filename = document.querySelector("#selected-filename");
 const addDealButton = document.querySelector("#add-deal-button");
@@ -13,6 +14,9 @@ const boardSelect = document.querySelector("#board-select");
 const dealCount = document.querySelector("#deal-count");
 const boardLabel = document.querySelector("#current-board-label");
 const boardNumber = document.querySelector("#board-number");
+const metadataBoard = document.querySelector("#metadata-board");
+const metadataDealer = document.querySelector("#metadata-dealer");
+const metadataVulnerability = document.querySelector("#metadata-vulnerability");
 const manualEntry = document.querySelector("#manual-entry");
 const manualEntryStatus = document.querySelector("#manual-entry-status");
 const handInputs = document.querySelectorAll("[data-entry-seat]");
@@ -36,6 +40,15 @@ const players = [
 ];
 const validRanks = "AKQJT98765432";
 
+function normalizeSuitRanks(value) {
+  const characters = [...value.toUpperCase().replace(/\s/g, "")];
+  const sortedRanks = characters
+    .filter(character => validRanks.includes(character))
+    .sort((first, second) => validRanks.indexOf(first) - validRanks.indexOf(second));
+  const invalidCharacters = characters.filter(character => !validRanks.includes(character));
+  return [...sortedRanks, ...invalidCharacters].join("");
+}
+
 function showDeal(dealValue) {
   clearHands();
 
@@ -55,16 +68,14 @@ function showDeal(dealValue) {
   }
 }
 
-function loadGames(newGames) {
+function loadGames(newGames, selectedIndex = 0) {
   games = newGames;
   boardSelect.replaceChildren();
 
   for (let index = 0; index < games.length; index += 1) {
     const option = document.createElement("option");
     option.value = String(index);
-    option.textContent = games[index].board
-      ? `Giv ${games[index].board}`
-      : `Post ${index + 1} – Board saknas`;
+    option.textContent = getBoardOptionText(games[index], index);
     boardSelect.append(option);
   }
 
@@ -72,7 +83,22 @@ function loadGames(newGames) {
   dealCount.textContent = games.length === 1
     ? "1 giv inläst"
     : `${games.length} givar inlästa`;
-  showGame(0);
+  showGame(selectedIndex);
+  updateExportButton();
+}
+
+function getBoardOptionText(game, index) {
+  const label = game.board
+    ? `Giv ${game.board}`
+    : `Post ${index + 1} – Board saknas`;
+  return game.validationState?.valid ? `${label}  ✓` : label;
+}
+
+function refreshBoardOption(index) {
+  const option = boardSelect.options[index];
+  if (option) {
+    option.textContent = getBoardOptionText(games[index], index);
+  }
 }
 
 function showGame(index) {
@@ -82,6 +108,9 @@ function showGame(index) {
     ? `Giv ${game.board}`
     : `Post ${index + 1} – Board saknas`;
   boardNumber.textContent = game.board || "–";
+  metadataBoard.textContent = game.board || "–";
+  metadataDealer.textContent = formatDealer(game.dealer);
+  metadataVulnerability.textContent = formatVulnerability(game.vulnerable);
 
   if (game.unfinished) {
     clearHands();
@@ -93,6 +122,35 @@ function showGame(index) {
     manualEntry.hidden = true;
     showDeal(game.deal);
   }
+}
+
+function formatDealer(dealer) {
+  return { N: "Nord", E: "Öst", S: "Syd", W: "Väst" }[dealer] || dealer || "–";
+}
+
+function formatVulnerability(vulnerability) {
+  return {
+    None: "Ingen",
+    NS: "NS",
+    EW: "ÖV",
+    All: "Alla",
+    "-": "–"
+  }[vulnerability] || vulnerability || "–";
+}
+
+function getBoardMetadata(boardNumberValue) {
+  const dealerCycle = ["N", "E", "S", "W"];
+  const vulnerabilityCycle = [
+    "None", "NS", "EW", "All",
+    "NS", "EW", "All", "None",
+    "EW", "All", "None", "NS",
+    "All", "None", "NS", "EW"
+  ];
+  const cycleIndex = (boardNumberValue - 1) % 16;
+  return {
+    dealer: dealerCycle[(boardNumberValue - 1) % 4],
+    vulnerable: vulnerabilityCycle[cycleIndex]
+  };
 }
 
 function createEmptyHands() {
@@ -141,8 +199,9 @@ function syncHandInputs(hands) {
   }
 }
 
-function updateManualEntry() {
-  const game = games[Number(boardSelect.value) || 0];
+function updateManualEntry(inputToNormalize = null) {
+  const selectedIndex = Number(boardSelect.value) || 0;
+  const game = games[selectedIndex];
   if (!game?.unfinished) {
     return;
   }
@@ -162,7 +221,9 @@ function updateManualEntry() {
     const suitKey = input.dataset.entrySuit;
     const player = players.find(item => item.key === seatKey);
     const suit = suits.find(item => item.key === suitKey);
-    const enteredRanks = input.value.toUpperCase().replace(/\s/g, "");
+    const enteredRanks = input === inputToNormalize
+      ? normalizeSuitRanks(input.value)
+      : input.value.toUpperCase().replace(/\s/g, "");
     input.value = enteredRanks;
     input.classList.remove("input-error");
     game.hands[seatKey][suitKey] = [...enteredRanks].join(" ");
@@ -223,12 +284,18 @@ function updateManualEntry() {
   manualEntryStatus.classList.toggle("entry-error", errorMessages.length > 0);
 
   const handSizes = players.map(player => handCounts[player.key]);
+  const allHandsHave13Cards = handSizes.every(count => count === 13);
   const dealIsComplete = errorMessages.length === 0
-    && handSizes.every(count => count === 13)
+    && allHandsHave13Cards
     && usedCards.size === 52;
 
   if (dealIsComplete) {
     const validation = validateDeal(game.hands);
+    game.validationState = {
+      complete: true,
+      valid: validation.valid,
+      errors: validation.errors
+    };
     showStatus(
       validation.valid
         ? `✓ Given är korrekt – ${validation.uniqueCards} unika kort`
@@ -236,8 +303,15 @@ function updateManualEntry() {
       validation.valid
     );
   } else {
-    showCollectionStatus("Ny givsamling – 1 giv");
+    game.validationState = {
+      complete: allHandsHave13Cards,
+      valid: false,
+      errors: errorMessages
+    };
+    showCollectionStatus(getCollectionStatus());
   }
+  refreshBoardOption(selectedIndex);
+  updateExportButton();
 
   const emptyHands = players.filter(player => handCounts[player.key] === 0);
   const fullHands = players.filter(player => handCounts[player.key] === 13);
@@ -285,6 +359,61 @@ function showCollectionStatus(message) {
   result.classList.remove("validation-success", "validation-error");
 }
 
+function getCollectionStatus() {
+  return games.length === 1
+    ? "Ny givsamling – 1 giv"
+    : `Ny givsamling – ${games.length} givar`;
+}
+
+function updateExportButton() {
+  const hasValidManualDeal = games.some(game => game.validationState?.valid);
+  exportButton.disabled = games.length === 0
+    || (isNewCollection && !hasValidManualDeal);
+}
+
+function formatBoardNames(boardNames) {
+  if (boardNames.length === 1) {
+    return boardNames[0];
+  }
+  return `${boardNames.slice(0, -1).join(", ")} och ${boardNames.at(-1)}`;
+}
+
+function prepareGamesForExport() {
+  const exportGames = [];
+  const problemGames = [];
+
+  for (let index = 0; index < games.length; index += 1) {
+    const game = games[index];
+
+    try {
+      const hands = game.hands || parseDealValue(game.deal);
+      const validation = validateDeal(hands);
+      if (!validation.valid) {
+        problemGames.push(game.board ? `Giv ${game.board}` : `Post ${index + 1}`);
+        continue;
+      }
+
+      exportGames.push(game);
+    } catch (error) {
+      problemGames.push(game.board ? `Giv ${game.board}` : `Post ${index + 1}`);
+    }
+  }
+
+  return { exportGames, problemGames };
+}
+
+function downloadPbnFile(pbnText) {
+  const file = new Blob([pbnText], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(file);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "givsamling.pbn";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 function decodePbnFile(buffer) {
   try {
     return new TextDecoder("utf-8", { fatal: true }).decode(buffer);
@@ -302,6 +431,19 @@ openButton.addEventListener("click", () => {
   fileInput.click();
 });
 
+exportButton.addEventListener("click", () => {
+  const { exportGames, problemGames } = prepareGamesForExport();
+  if (problemGames.length > 0) {
+    showStatus(
+      `Kan inte exportera. ${formatBoardNames(problemGames)} måste kompletteras eller rättas.`,
+      false
+    );
+    return;
+  }
+
+  downloadPbnFile(createPbnText(exportGames));
+});
+
 newCollectionButton.addEventListener("click", () => {
   isNewCollection = true;
   games = [];
@@ -313,6 +455,9 @@ newCollectionButton.addEventListener("click", () => {
   fileInput.value = "";
   boardLabel.textContent = "Ingen giv";
   boardNumber.textContent = "–";
+  metadataBoard.textContent = "–";
+  metadataDealer.textContent = "–";
+  metadataVulnerability.textContent = "–";
   dealCount.textContent = "0 givar inlästa";
   addDealButton.hidden = false;
   addDealButton.disabled = false;
@@ -320,22 +465,32 @@ newCollectionButton.addEventListener("click", () => {
   manualEntryStatus.textContent = "";
   fillableSeat = null;
   fillLastHandButton.disabled = true;
+  updateExportButton();
   showCollectionStatus("Ny givsamling – 0 givar");
 });
 
 addDealButton.addEventListener("click", () => {
-  if (!isNewCollection || games.length > 0) {
+  if (!isNewCollection) {
     return;
   }
 
-  loadGames([{
-    board: "1",
-    dealer: "N",
-    vulnerable: "None",
+  const existingBoardNumbers = games
+    .map(game => Number(game.board))
+    .filter(Number.isInteger);
+  const nextBoardNumber = existingBoardNumbers.length > 0
+    ? Math.max(...existingBoardNumbers) + 1
+    : 1;
+  const metadata = getBoardMetadata(nextBoardNumber);
+  const newGame = {
+    board: String(nextBoardNumber),
+    dealer: metadata.dealer,
+    vulnerable: metadata.vulnerable,
     hands: createEmptyHands(),
-    unfinished: true
-  }]);
-  addDealButton.disabled = true;
+    unfinished: true,
+    validationState: { complete: false, valid: false, errors: [] }
+  };
+
+  loadGames([...games, newGame], games.length);
 });
 
 boardSelect.addEventListener("change", () => {
@@ -343,7 +498,8 @@ boardSelect.addEventListener("change", () => {
 });
 
 for (const input of handInputs) {
-  input.addEventListener("input", updateManualEntry);
+  input.addEventListener("input", () => updateManualEntry());
+  input.addEventListener("blur", () => updateManualEntry(input));
 }
 
 fillLastHandButton.addEventListener("click", () => {
@@ -384,6 +540,7 @@ fileInput.addEventListener("change", async () => {
   addDealButton.disabled = false;
   manualEntry.hidden = true;
   fillableSeat = null;
+  updateExportButton();
 
   try {
     const buffer = await file.arrayBuffer();
@@ -395,6 +552,7 @@ fileInput.addEventListener("change", async () => {
     boardSelect.replaceChildren();
     boardNavigation.hidden = true;
     dealCount.textContent = "0 givar inlästa";
+    updateExportButton();
     showStatus(error.message, false);
   }
 });

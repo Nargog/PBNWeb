@@ -111,6 +111,30 @@ h2 {
   font-size: 0.9rem;
 }
 
+.deal-metadata {
+  display: flex;
+  gap: 18px;
+  margin: 0;
+}
+
+.deal-metadata div {
+  display: grid;
+  gap: 2px;
+}
+
+.deal-metadata dt {
+  color: #6d7b73;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.deal-metadata dd {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .validation-result {
   margin-bottom: 24px;
   padding: 12px 14px;
@@ -408,8 +432,8 @@ h2 {
     margin-bottom: 28px;
   }
 
-  .section-note {
-    display: none;
+  .deal-metadata {
+    gap: 10px;
   }
 
   .hand-entry-grid {
