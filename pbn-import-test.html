@@ -1,0 +1,12 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>PBN import regression tests</title>
+<pre id="test-results">Running…</pre>
+<iframe src="index.html" hidden></iframe>
+<script>
+document.querySelector('iframe').addEventListener('load', function () {
+  const script = this.contentDocument.createElement('script');
+  script.src = 'pbn-import-test.js';
+  this.contentDocument.body.append(script);
+});
+</script>

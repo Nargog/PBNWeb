@@ -6,6 +6,8 @@ const result = document.querySelector("#validation-result");
 const newCollectionButton = document.querySelector("#new-collection-button");
 const openButton = document.querySelector("#open-pbn-button");
 const pasteDealButton = document.querySelector("#paste-deal-button");
+const importDealButton = document.querySelector("#import-deal-button");
+const dealFileInput = document.querySelector("#deal-file-input");
 const exportButton = document.querySelector("#export-pbn-button");
 const fileInput = document.querySelector("#pbn-file-input");
 const filename = document.querySelector("#selected-filename");
@@ -82,6 +84,7 @@ function loadGames(newGames, selectedIndex = 0) {
 
   boardNavigation.hidden = false;
   deleteDealButton.disabled = games.length === 0;
+  importDealButton.disabled = games.length === 0;
   if (games.length > 0) {
     showGame(Math.min(selectedIndex, games.length - 1));
   } else {
@@ -627,6 +630,40 @@ function decodePbnFile(buffer) {
 openButton.addEventListener("click", () => {
   fileInput.value = "";
   fileInput.click();
+});
+
+importDealButton.addEventListener("click", () => {
+  dealFileInput.value = "";
+  dealFileInput.click();
+});
+
+dealFileInput.addEventListener("change", async () => {
+  const file = dealFileInput.files[0];
+  const currentGame = games[Number(boardSelect.value) || 0];
+  if (!file || !currentGame) return;
+
+  try {
+    const importedGames = parsePbnFile(decodePbnFile(await file.arrayBuffer()));
+    if (importedGames.length !== 1) {
+      throw new Error("Filen innehåller flera givar. Välj en fil med en enda giv eller använd Öppna givsamling.");
+    }
+    const hands = normalizeHands(parseDealValue(importedGames[0].deal));
+    const validation = validateDeal(hands);
+    if (!validation.valid) {
+      showStatus(validation.errors.join("; "), false);
+      return;
+    }
+
+    // A selection or collection change during file reading must not redirect the import.
+    if (games[Number(boardSelect.value) || 0] !== currentGame) return;
+    if (gameHasAnyCards(currentGame) && !window.confirm(
+      `Giv ${currentGame.board || Number(boardSelect.value) + 1} innehåller redan kort. Vill du ersätta korten med den importerade given?`
+    )) return;
+
+    replaceCurrentGameHands(hands);
+  } catch (error) {
+    showStatus(error.message, false);
+  }
 });
 
 pasteDealButton.addEventListener("click", () => {
